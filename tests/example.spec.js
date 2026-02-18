@@ -1,19 +1,72 @@
-// @ts-check
 import { test, expect } from '@playwright/test';
+import { chromium } from '@playwright/test';
 
-test('has title', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+test('login test', async ({ page }) => {
+  await page.goto('https://www.saucedemo.com/');
+  
+  await page.locator('[data-test="username"]').fill('standard_user');
 
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
+  await page.locator('[data-test="password"]').fill('secret_sauce');
+
+  await page.locator('[data-test="login-button"]').click();
+
+  await expect(page).toHaveURL(/.*inventory\.html/);
+
+  const inventoryList = page.locator('[data-test="inventory-list"]');
+  await expect(inventoryList).toBeVisible();
+  const items = inventoryList.locator('[data-test="inventory-item"]');
+  await expect(items.first()).toBeVisible();
+
+
 });
 
-test('get started link', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+test('add item to cart', async ({ page }) => {
+  await page.goto('https://www.saucedemo.com/');
+  await page.locator('[data-test="username"]').fill('standard_user');
+  await page.locator('[data-test="password"]').fill('secret_sauce');
+  await page.locator('[data-test="login-button"]').click();
 
-  // Click the get started link.
-  await page.getByRole('link', { name: 'Get started' }).click();
+  const firstItem = page.locator('[data-test="inventory-item"]').first();
+  await firstItem.locator('button:has-text("Add to cart")').click();
 
-  // Expects page to have a heading with the name of Installation.
-  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
+  const cartBadge = page.locator('[data-test="shopping-cart-badge"]');
+  await expect(cartBadge).toHaveText('1');
+
+  await page.locator('[data-test="shopping-cart-link"]').click();
+  await expect(page).toHaveURL('https://www.saucedemo.com/cart.html');
+
+  const cartItem = page.locator('[data-test="inventory-item"]');
+  await expect(cartItem.first()).toBeVisible();
+});
+
+test('checkout process', async ({ page}) => {
+  await page.goto('https://www.saucedemo.com/');
+  await page.locator('[data-test="username"]').fill('standard_user');
+  await page.locator('[data-test="password"]').fill('secret_sauce');
+  await page.locator('[data-test="login-button"]').click();
+
+  const firstItem = page.locator('[data-test="inventory-item"]').first();
+  await firstItem.locator('button:has-text("Add to cart")').click();
+
+  await page.locator('[data-test="shopping-cart-link"]').click();
+  await expect(page).toHaveURL('https://www.saucedemo.com/cart.html');
+
+  await page.locator('[data-test="checkout"]').click();
+  await expect(page).toHaveURL('https://www.saucedemo.com/checkout-step-one.html');
+
+  await page.locator('[data-test="firstName"]').fill('Nazrin');
+  await page.locator('[data-test="lastName"]').fill('Aliyeva');
+  await page.locator('[data-test="postalCode"]').fill('1010');
+
+  await page.locator('[data-test="continue"]').click();
+  await expect(page).toHaveURL('https://www.saucedemo.com/checkout-step-two.html');
+
+  const totalPrice = page.locator('[data-test="total-label"]');
+  await expect(totalPrice).toBeVisible();
+
+  await page.locator('[data-test="finish"]').click();
+  await expect(page).toHaveURL('https://www.saucedemo.com/checkout-complete.html');
+
+  const successMessage = page.locator('[data-test="complete-header"]');
+  await expect(successMessage).toHaveText('Thank you for your order!');
 });
