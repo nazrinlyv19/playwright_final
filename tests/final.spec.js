@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { chromium } from '@playwright/test';
+import { login } from '../helper/login';
+
 
 test('login test', async ({ page }) => {
+
   await page.goto('https://www.saucedemo.com/');
   
   await page.locator('[data-test="username"]').fill('standard_user');
@@ -20,11 +22,10 @@ test('login test', async ({ page }) => {
 
 });
 
+
 test('add item to cart', async ({ page }) => {
-  await page.goto('https://www.saucedemo.com/');
-  await page.locator('[data-test="username"]').fill('standard_user');
-  await page.locator('[data-test="password"]').fill('secret_sauce');
-  await page.locator('[data-test="login-button"]').click();
+
+  await login(page, 'standard_user');
 
   const firstItem = page.locator('[data-test="inventory-item"]').first();
   await firstItem.locator('button:has-text("Add to cart")').click();
@@ -39,11 +40,10 @@ test('add item to cart', async ({ page }) => {
   await expect(cartItem.first()).toBeVisible();
 });
 
+
 test('checkout process', async ({ page}) => {
-  await page.goto('https://www.saucedemo.com/');
-  await page.locator('[data-test="username"]').fill('standard_user');
-  await page.locator('[data-test="password"]').fill('secret_sauce');
-  await page.locator('[data-test="login-button"]').click();
+
+  await login(page, 'standard_user');
 
   const firstItem = page.locator('[data-test="inventory-item"]').first();
   await firstItem.locator('button:has-text("Add to cart")').click();
@@ -70,3 +70,18 @@ test('checkout process', async ({ page}) => {
   const successMessage = page.locator('[data-test="complete-header"]');
   await expect(successMessage).toHaveText('Thank you for your order!');
 });
+
+test('filter', async ({ page }) => {
+
+  await login(page, 'standard_user');
+
+  await page.locator('[data-test="product-sort-container"]').selectOption('lohi');
+
+  const prices = await page.locator('.inventory_item_price').allTextContents();
+  const numericPrices = prices.map(price =>
+    parseFloat(price.replace('$', ''))
+  );
+  const sortedPrices = [...numericPrices].sort((a, b) => a - b);
+  expect(numericPrices).toEqual(sortedPrices);
+
+})
