@@ -71,6 +71,7 @@ test('checkout process', async ({ page}) => {
   await expect(successMessage).toHaveText('Thank you for your order!');
 });
 
+
 test('filter', async ({ page }) => {
 
   await login(page, 'standard_user');
