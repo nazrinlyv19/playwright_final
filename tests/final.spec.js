@@ -85,4 +85,69 @@ test('filter', async ({ page }) => {
   const sortedPrices = [...numericPrices].sort((a, b) => a - b);
   expect(numericPrices).toEqual(sortedPrices);
 
-})
+});
+
+
+test.describe.parallel('Parallel login tests', () => {
+
+  test('standard_user login', async ({ page }) => {
+    await login(page, 'standard_user', 'secret_sauce');
+
+    await expect(page).toHaveURL(/inventory/);
+
+    await page.locator('[data-test="inventory-item"]')
+      .first()
+      .locator('button:has-text("Add to cart")')
+      .click();
+     
+    await page.locator('[data-test="shopping-cart-link"]').click();
+    await expect(page).toHaveURL(/cart/);
+
+    await page.locator('[data-test="checkout"]').click();
+    await page.locator('[data-test="firstName"]').fill('Standard');
+    await page.locator('[data-test="lastName"]').fill('User');
+    await page.locator('[data-test="postalCode"]').fill('1000');
+    await page.locator('[data-test="continue"]').click();
+
+    await page.locator('[data-test="finish"]').click();
+
+    await expect(page.locator('[data-test="complete-header"]'))
+      .toHaveText('Thank you for your order!');
+
+    await page.locator('[data-test="back-to-products"]').click();
+    await expect(page).toHaveURL(/inventory/);
+
+
+  });
+
+  test('problem_user login', async ({ page }) => {
+    await login(page, 'problem_user', 'secret_sauce');
+
+    await expect(page).toHaveURL(/inventory/);
+
+    await page.locator('[data-test="inventory-item"]')
+      .first()
+      .locator('button:has-text("Add to cart")')
+      .click();
+
+    await page.locator('[data-test="shopping-cart-link"]').click();
+    await expect(page).toHaveURL(/cart/);
+
+    await page.locator('[data-test="checkout"]').click();
+    await page.locator('[data-test="firstName"]').fill('Problem');
+    await page.locator('[data-test="lastName"]').fill('User');
+    await page.locator('[data-test="postalCode"]').fill('1100');
+    await page.locator('[data-test="continue"]').click();
+
+    await page.locator('[data-test="finish"]').click();
+
+    await expect(page.locator('[data-test="complete-header"]'))
+      .toHaveText('Thank you for your order!');
+
+    await page.locator('[data-test="back-to-products"]').click();
+    await expect(page).toHaveURL(/inventory/);
+   
+
+  });
+
+});
